@@ -12,7 +12,6 @@ whitelist.json
 usercache.json
 usernamecache.json
 ServerStart.sh
-README.md
 LICENSE.md
 *.cache
 *.log
