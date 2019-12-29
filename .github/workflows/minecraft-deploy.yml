@@ -1,0 +1,153 @@
+name: "minecraft-deploy"
+# on:
+#   schedule: 
+#   - cron: '*/5 * * * *'
+on: push
+  
+jobs:
+  _01-ci_skip:
+    runs-on: self-hosted
+    steps:
+    - name: check deploy
+      env:
+        COMMIT_FILTER: "skip-ci"
+      run: | 
+        # Get last commit message
+        readonly local last_commit_log=$(git log -1 --pretty=format:"%s")
+        echo "last commit log: $last_commit_log"
+
+        readonly local filter_count=$(echo "$last_commit_log" | grep -c "$COMMIT_FILTER" )
+        echo "number of occurence of '$COMMIT_FILTER' in '$last_commit_log': $filter_count"
+
+        if [[ "$filter_count" -eq 0 ]]; then
+          echo "all good, continue"
+        else
+          echo "the last commit log \"$last_commit_log\" contains \"$COMMIT_FILTER\", stopping"
+          exit 78
+        fi    
+      
+  _02-checkout:
+    runs-on: self-hosted
+    needs: _01-ci_skip
+    steps:
+    - uses: actions/checkout@v1
+
+  _03-check-deploy:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout]
+    steps:
+    - name: check deploy
+      run: |
+        uname -a
+
+  _04-check-connected:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy]
+    steps:
+    - name: check deploy
+      run: |
+        uname -a
+        chmod +x ./.github/scripts/check_connected.sh
+        ./.github/scripts/check_connected.sh minecraft-01-latest
+
+  _05-check-process:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy, _04-check-connected]
+    steps:
+    - name: check deploy
+      continue-on-error: true
+      env:
+        HOSTNAME: "latest.legendsandmasters.nl"
+      run: |
+        uname -a
+        chmod +x ./.github/scripts/check_process.sh
+        ./.github/scripts/check_process.sh "$HOSTNAME"
+    # if fails
+#     - name: kill server
+#       env:
+#         HOSTNAME: "latest.legendsandmasters.nl"      
+#       if: failure()
+#       run: |
+#         uname -a
+#         chmod +x ./.github/scripts/kill_process.sh
+#         ./.github/scripts/kill_process.sh "$HOSTNAME"       
+       
+  _06-backup-all:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy, _04-check-connected, _05-check-process]
+    steps:
+    - name: check deploy
+      env:
+        HOSTNAME: "latest.legendsandmasters.nl"
+        FOLDER: "minecraft-01-latest"
+      run: |
+        uname -a
+        chmod +x ./.github/scripts/backup_all.sh
+        ./.github/scripts/backup_all.sh "$HOSTNAME" "$FOLDER"
+
+  _07-backup-world:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy, _04-check-connected, _05-check-process, _06-backup-all]
+    steps:
+    - name: check deploy
+      env:
+        HOSTNAME: "latest.legendsandmasters.nl"
+        FOLDER: "minecraft-01-latest"      
+      run: |
+        uname -a
+        chmod +x ./.github/scripts/backup_world.sh
+        ./.github/scripts/backup_world.sh "$HOSTNAME" "$FOLDER"       
+        
+  _08-deploy:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy, _04-check-connected, _05-check-process, _06-backup-all, _07-backup-world]
+    steps:
+    - name: check deploy
+      env:
+        FOLDER: "minecraft-01-latest"            
+      run: |
+        uname -a 
+        sudo rsync -a --exclude '.git' --exclude '.github' ./ /home/minecraft/deployed/"$FOLDER"/    
+        sudo chown -R minecraft: /home/minecraft/deployed/        
+        
+  _09-deploy-checks:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy, _04-check-connected, _05-check-process, _06-backup-all, _07-backup-world, _08-deploy]
+    steps:
+    - name: check deploy      
+      run: |
+        uname -a
+        
+  _10-start-server:
+    runs-on: self-hosted
+    needs: [_01-ci_skip, _02-checkout, _03-check-deploy, _04-check-connected, _05-check-process, _06-backup-all, _07-backup-world, _08-deploy, _09-deploy-checks]
+    steps:
+    - name: check deploy
+      env:
+        HOSTNAME: "latest.legendsandmasters.nl"
+        FOLDER: "minecraft-01-latest"              
+      run: |
+        uname -a
+        
+        sudo cd /home/minecraft/deployed/"$FOLDER"/
+        # sudo su minecraft -c "cd /home/minecraft/deployed/"$FOLDER"/; /bin/bash"
+        sudo runuser -l  minecraft -c "cd /home/minecraft/deployed/"$FOLDER"/; nohup ./ServerStart.sh -a "$HOSTNAME" > /dev/null 2>&1 & echo $! > "$FOLDER".pid"
+        # sudo runuser -l  minecraft -c 'cd /home/minecraft/deployed/minecraft-01-latest/ ; ls -la ; nohup ./ServerStart.sh -a latest.legendsandmasters.nl > /dev/null 2>&1 & echo $! > minecraft-01-latest.pid'
+
+        
+# jobs:
+#   my-job:
+#   my-job:
+#     name: get config
+#     runs-on: self-hosted
+#     steps:
+#     - uses: actions/checkout@v1
+#     - name: get config
+#       run: |
+#         # uname -a
+#         # ls -la
+#         # sudo screen -S latest.legendsandmasters.nl -X quit
+#         sudo rsync -a --exclude '.git' --exclude '.github' ./ /home/minecraft/deployed/minecraft-01-latest/
+#         # sudo ls -la /home/minecraft/deployed/minecraft-01-latest 
+#         # sudo cat /home/minecraft/deployed/minecraft-01-latest/settings.cfg     
+#         sudo chown -R minecraft: /home/minecraft/deployed/
