@@ -48,7 +48,7 @@ jobs:
       run: |
         uname -a
         chmod +x ./.github/scripts/check_connected.sh
-        ./.github/scripts/check_connected.sh minecraft-01
+        ./.github/scripts/check_connected.sh minecraft-00
 
   _05-check-process:
     runs-on: self-hosted
@@ -79,7 +79,7 @@ jobs:
     - name: check deploy
       env:
         HOSTNAME: "legendsandmasters.nl"
-        FOLDER: "minecraft-01"
+        FOLDER: "minecraft-00"
       run: |
         uname -a
         chmod +x ./.github/scripts/backup_all.sh
@@ -92,7 +92,7 @@ jobs:
     - name: check deploy
       env:
         HOSTNAME: "legendsandmasters.nl"
-        FOLDER: "minecraft-01"      
+        FOLDER: "minecraft-00"      
       run: |
         uname -a
         chmod +x ./.github/scripts/backup_world.sh
@@ -104,7 +104,7 @@ jobs:
     steps:
     - name: check deploy
       env:
-        FOLDER: "minecraft-01"            
+        FOLDER: "minecraft-00"            
       run: |
         uname -a 
         sudo rsync -a --exclude '.git' --exclude '.github' ./ /home/minecraft/deployed/"$FOLDER"/    
@@ -125,7 +125,7 @@ jobs:
     - name: check deploy
       env:
         HOSTNAME: "legendsandmasters.nl"
-        FOLDER: "minecraft-01"
+        FOLDER: "minecraft-00"
       run: |
         uname -a
         
