@@ -41,6 +41,7 @@ jobs:
         uname -a
         git clone https://github.com/CoolZeroNL/minecraft-actions-scripts.git
         ls -la 
+        ls -la .github
         cp minecraft-actions-scripts/* ./github/scripts/
         
   _04-check-deploy:
