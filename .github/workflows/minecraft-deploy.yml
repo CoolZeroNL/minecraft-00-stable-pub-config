@@ -45,10 +45,12 @@ jobs:
     needs: [_01-ci_skip, _02-checkout, _03-check-deploy]
     steps:
     - name: check deploy
+      env:
+        FOLDER: "minecraft-00-stable"      
       run: |
         uname -a
         chmod +x ./.github/scripts/check_connected.sh
-        ./.github/scripts/check_connected.sh minecraft-00
+        ./.github/scripts/check_connected.sh "$FOLDER"
 
   _05-check-process:
     runs-on: self-hosted
@@ -57,7 +59,7 @@ jobs:
     - name: check deploy
       continue-on-error: true
       env:
-        HOSTNAME: "legendsandmasters.nl"
+        HOSTNAME: "stable.legendsandmasters.nl"
       run: |
         uname -a
         chmod +x ./.github/scripts/check_process.sh
@@ -78,8 +80,8 @@ jobs:
     steps:
     - name: check deploy
       env:
-        HOSTNAME: "legendsandmasters.nl"
-        FOLDER: "minecraft-00"
+        HOSTNAME: "stable.legendsandmasters.nl"
+        FOLDER: "minecraft-00-stable"
       run: |
         uname -a
         chmod +x ./.github/scripts/backup_all.sh
@@ -91,8 +93,8 @@ jobs:
     steps:
     - name: check deploy
       env:
-        HOSTNAME: "legendsandmasters.nl"
-        FOLDER: "minecraft-00"      
+        HOSTNAME: "stable.legendsandmasters.nl"
+        FOLDER: "minecraft-00-stable"      
       run: |
         uname -a
         chmod +x ./.github/scripts/backup_world.sh
@@ -104,7 +106,7 @@ jobs:
     steps:
     - name: check deploy
       env:
-        FOLDER: "minecraft-00"            
+        FOLDER: "minecraft-00-stable"            
       run: |
         uname -a 
         sudo rsync -a --exclude '.git' --exclude '.github' ./ /home/minecraft/deployed/"$FOLDER"/    
@@ -124,15 +126,14 @@ jobs:
     steps:
     - name: check deploy
       env:
-        HOSTNAME: "legendsandmasters.nl"
-        FOLDER: "minecraft-00"
+        HOSTNAME: "stable.legendsandmasters.nl"
+        FOLDER: "minecraft-00-stable"
       run: |
         uname -a
         
         sudo cd /home/minecraft/deployed/"$FOLDER"/
-        # sudo su minecraft -c "cd /home/minecraft/deployed/"$FOLDER"/; /bin/bash"
         sudo runuser -l  minecraft -c "cd /home/minecraft/deployed/"$FOLDER"/; nohup ./ServerStart.sh -a "$HOSTNAME" > /dev/null 2>&1 & echo $! > "$FOLDER".pid"
-        # sudo runuser -l  minecraft -c 'cd /home/minecraft/deployed/minecraft-01-latest/ ; ls -la ; nohup ./ServerStart.sh -a latest.legendsandmasters.nl > /dev/null 2>&1 & echo $! > minecraft-01-latest.pid'
+        
 
         
 # jobs:
